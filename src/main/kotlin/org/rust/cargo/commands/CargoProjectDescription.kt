@@ -29,9 +29,9 @@ class CargoProjectDescription(private val project: Project) {
     }
 
     init {
-        val idToPackage = project.packages.toMap { it.id to it }
+        val idToPackage = project.packages.associate { it.id to it }
 
-        val dependenciesMap = project.resolve.nodes.toMap { node ->
+        val dependenciesMap = project.resolve.nodes.associate { node ->
             idToPackage[node.id]!! to node.dependencies.map { idToPackage[it]!! }
         }
 
@@ -39,7 +39,7 @@ class CargoProjectDescription(private val project: Project) {
 
         val idToModule = project.packages
             .filter { it.isModule }
-            .toMap { pkg ->
+            .associate { pkg ->
                 pkg.id to CargoProjectDescription.Module(
                     File(PathUtil.getParentPath(pkg.manifest_path)),
                     pkg.name
@@ -48,7 +48,7 @@ class CargoProjectDescription(private val project: Project) {
 
         val idToLibrary = project.packages
             .filter { !it.isModule }
-            .toMap { pkg ->
+            .associate { pkg ->
                 pkg.id to CargoProjectDescription.Library(
                     File(PathUtil.getParentPath(pkg.manifest_path)),
                     pkg.name,

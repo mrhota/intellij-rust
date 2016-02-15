@@ -28,57 +28,53 @@ class RustModulesIndexExtension : FileBasedIndexExtension<RustModulePath, RustQu
     override fun getInputFilter(): FileBasedIndex.InputFilter =
         DefaultFileTypeSpecificInputFilter(RustFileType)
 
-    override fun getKeyDescriptor(): KeyDescriptor<RustModulePath> = keyDescriptor
+    override fun getKeyDescriptor(): KeyDescriptor<RustModulePath> = myKeyDescriptor
 
-    override fun getValueExternalizer(): DataExternalizer<RustQualifiedName> = valueExternalizer
+    override fun getValueExternalizer(): DataExternalizer<RustQualifiedName> = myValueExternalizer
 
-    override fun getIndexer(): DataIndexer<RustModulePath, RustQualifiedName, FileContent> = dataIndexer
+    override fun getIndexer(): DataIndexer<RustModulePath, RustQualifiedName, FileContent> = myDataIndexer
 
-    companion object {
-
-        val keyDescriptor = object: KeyDescriptor<RustModulePath> {
-
-            override fun save(out: DataOutput, path: RustModulePath?) {
-                path?.let {
-                    RustModulePath.writeTo(out, it)
-                }
+    object myKeyDescriptor : KeyDescriptor<RustModulePath> {
+        override fun save(out: DataOutput, path: RustModulePath?) {
+            path?.let {
+                RustModulePath.writeTo(out, it)
             }
-
-            override fun read(`in`: DataInput): RustModulePath? =
-                RustModulePath.readFrom(`in`)
-
-            override fun isEqual(one: RustModulePath?, other: RustModulePath?): Boolean =
-                one?.equals(other) ?: false
-
-            override fun getHashCode(value: RustModulePath?): Int = value?.hashCode() ?: -1
         }
 
-        val valueExternalizer = object: DataExternalizer<RustQualifiedName> {
+        override fun read(`in`: DataInput): RustModulePath? =
+            RustModulePath.readFrom(`in`)
 
-            override fun save(out: DataOutput, name: RustQualifiedName?) {
-                name?.let { RustQualifiedName.writeTo(`out`, it) }
-            }
+        override fun isEqual(one: RustModulePath?, other: RustModulePath?): Boolean =
+            one?.equals(other) ?: false
 
-            override fun read(`in`: DataInput): RustQualifiedName? {
-                return RustQualifiedName.readFrom(`in`)
-            }
+        override fun getHashCode(value: RustModulePath?): Int = value?.hashCode() ?: -1
+    }
 
+    object myValueExternalizer : DataExternalizer<RustQualifiedName> {
+
+        override fun save(out: DataOutput, name: RustQualifiedName?) {
+            name?.let { RustQualifiedName.writeTo(`out`, it) }
         }
 
-        val dataIndexer =
-            DataIndexer<RustModulePath, RustQualifiedName, FileContent> {
-                val map = HashMap<RustModulePath, RustQualifiedName>()
+        override fun read(`in`: DataInput): RustQualifiedName? {
+            return RustQualifiedName.readFrom(`in`)
+        }
+    }
 
-                PsiManager.getInstance(it.project).findFile(it.file)?.let {
-                    for ((qualName, targets) in process(it)) {
-                        targets.forEach {
-                            map.put(RustModulePath.devise(it), qualName)
-                        }
+    object myDataIndexer: DataIndexer<RustModulePath, RustQualifiedName, FileContent> {
+        override fun map(inputData: FileContent): MutableMap<RustModulePath, RustQualifiedName> {
+            val map = HashMap<RustModulePath, RustQualifiedName>()
+
+            PsiManager.getInstance(inputData.project).findFile(inputData.file)?.let {
+                for ((qualName, targets) in process(it)) {
+                    targets.forEach {
+                        map.put(RustModulePath.devise(it), qualName)
                     }
                 }
-
-                map
             }
+
+            return map
+        }
 
         private fun process(f: PsiFile): Map<RustQualifiedName, List<PsiFile>> {
             val raw = HashMap<RustQualifiedName, List<PsiFile>>()
