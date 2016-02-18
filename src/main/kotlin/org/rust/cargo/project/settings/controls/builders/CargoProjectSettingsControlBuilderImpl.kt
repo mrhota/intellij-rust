@@ -7,10 +7,14 @@ import com.intellij.openapi.externalSystem.util.PaintAwarePanel
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkType
+import com.intellij.openapi.roots.ui.configuration.JdkComboBox
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.ui.TextComponentAccessor
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.components.JBLabel
@@ -20,6 +24,7 @@ import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.RustSdkType
 import org.rust.cargo.project.settings.CargoProjectSettings
 import java.beans.PropertyChangeListener
+import javax.swing.JButton
 import javax.swing.JLabel
 import javax.swing.event.DocumentEvent
 import javax.swing.event.DocumentListener
@@ -39,6 +44,7 @@ class CargoProjectSettingsControlBuilderImpl(private val myInitialSettings: Carg
 
     private var cargoHomeLabel: JLabel? = null
     private var cargoHomePathField: TextFieldWithBrowseButton? = null
+    private var sdkComboBox: JdkComboBox? = null
 
     fun disableCargoHomePathComponents(): CargoProjectSettingsControlBuilder {
         disabledCargoHomePathComponents = true
@@ -130,6 +136,16 @@ class CargoProjectSettingsControlBuilderImpl(private val myInitialSettings: Carg
 
         cargoHomeLabel      = JBLabel("Cargo home")
         cargoHomePathField  = pathField
+
+        val setUpButton: JButton = JButton("Add")
+        val project: Project? = null
+        val jdksModel: ProjectSdksModel = ProjectSdksModel()
+        val firstItem: JdkComboBox.JdkComboBoxItem = JdkComboBox.NoneJdkComboBoxItem()
+        val additionalSetup: Condition<Sdk>? = null
+        val moduleJdkSetup: Boolean = true
+
+        sdkComboBox = JdkComboBox(jdksModel)
+        sdkComboBox.setSetupButton(setUpButton, project, jdksModel, firstItem, additionalSetup, moduleJdkSetup)
 
         content.add(cargoHomeLabel,       ExternalSystemUiUtil.getLabelConstraints(indentLevel))
         content.add(cargoHomePathField,   ExternalSystemUiUtil.getFillLineConstraints(0))
