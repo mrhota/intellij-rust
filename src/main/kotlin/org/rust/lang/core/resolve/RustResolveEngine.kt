@@ -1,6 +1,9 @@
 package org.rust.lang.core.resolve
 
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.OrderRootType
 import org.rust.cargo.project.module.util.crateRoots
 import org.rust.lang.core.names.RustAnonymousId
 import org.rust.lang.core.names.RustFileModuleId
@@ -66,6 +69,18 @@ object RustResolveEngine {
     fun resolveUseGlob(ref: RustUseGlob): ResolveResult =
         Resolver().resolveUseGlob(ref)
 
+    fun resolveCrate(element: RustExternCrateItem): ResolveResult {
+        val crateName = element.name ?: return ResolveResult.Unresolved
+        val module = element.getModule() ?: return ResolveResult.Unresolved
+        ModuleRootManager.getInstance(module).orderEntries().forEachLibrary { library ->
+            println("${library.name}, $crateName")
+            library.getFiles(OrderRootType.SOURCES).forEach {
+                println(it.path)
+            }
+            true
+        }
+        return ResolveResult.Unresolved
+    }
 }
 
 
